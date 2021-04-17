@@ -318,7 +318,7 @@ create_config_file() {
     echo "-feature-dbus" >>$3
     echo "-feature-xml" >>$3
     echo "-no-feature-testlib" >>$3
-    echo "-nomake" >>$3
+    echo "-make" >>$3
     echo "examples" >>$3
     echo "-qt-zlib" >>$3
     echo "-qt-harfbuzz" >>$3
