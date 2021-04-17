@@ -343,6 +343,17 @@ check_curl_exists() {
     fi
 }
 
+check_jom_exists() {
+    jompath=`which jom 2>/dev/null`
+    if [ "x$jompath" = "x" ]; then
+        echo "*** Error: jom not found."
+        echo "  jom can be downloaded from"
+        echo "  https://wiki.qt.io/Jom"
+        echo "  The executable has to be copied into PATH."
+        exit 1
+    fi
+}
+
 urls=`echo "$qturl"`
 qtdir=Qt
 if [ ! "x$basedir" == "x" ]; then
@@ -434,6 +445,8 @@ if [ ! -d $qtdir/$tgtdir ]; then
 fi
 
 absqttgtdir=$( as_absolute_windows_path $qtdir/$tgtdir )
+
+check_jom_exists
 
 # Create batch script to build Qt libraries for
 # all requested platforms and execute it.
