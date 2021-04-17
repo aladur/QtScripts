@@ -23,7 +23,7 @@
 # Download and rebuild Qt 5.x.y libraries.
 #
 # Syntax:
-#    downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>] -v <qt_version>
+#    downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>][-p <platforms>] -v <qt_version>
 # Options:
 #   -d:             Delete Qt downloads and build directories before downloading
 #                   and building them.
@@ -37,6 +37,9 @@
 #   -T <vs_type>    The Visual Studio type, Enterprise, Professional or
 #                   Community. If not set the script looks for an installed VS
 #                   type Enterprise, Professional or Community, in this order.
+#   -p <platforms>  The platforms to be build, Win32, x64 or Win32_x64.
+#                   If not set x64 is build. Win32_x64 builds for both
+#                   Win32 and x64 platforms.
 #   -v qt_version   Specify Qt version to be build.
 #                   Syntax: <major>.<minor>.<patch>
 #
@@ -51,8 +54,8 @@
 # - CMake >= 3.15 from https://cmake.org/download/
 # - jom.exe (nmake replacement) from https://wiki.qt.io/Jom
 
-#Set all platforms to be build (Supported: Win32, x64)
-platforms="Win32 x64"
+# Supported platforms:
+splatforms="Win32 x64 Win32_x64"
 # Appropriate Visual Studio versions and types:
 vsversions="2019 2017"
 vstypes="Enterprise Professional Community"
@@ -62,7 +65,7 @@ vstypes="Enterprise Professional Community"
 
 function usage() {
     echo "Syntax:"
-    echo "   downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>] -v <qt_version>"
+    echo "   downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>][-p <platforms>] -v <qt_version>"
     echo "Options:"
     echo "   -d:             Delete Qt downloads and build directories before downloading"
     echo "                   and building them."
@@ -76,6 +79,9 @@ function usage() {
     echo "   -T <vs_type>    The Visual Studio type, Enterprise, Professional or"
     echo "                   Community. If not set the script looks for an installed VS"
     echo "                   type Enterprise, Professional or Community, in this order."
+    echo "   -p <platforms>  The platforms to be build, Win32, x64 or Win32_x64."
+    echo "                   If not set x64 is build. Win32_x64 builds for both"
+    echo "                   Win32 and x64 platforms."
     echo "   -v <qt_version> The Qt version to be build. Syntax: 5.<minor>.<patch>"
     echo ""
     echo "All config combinations Win32/x64 and Debug/Release are build."
@@ -94,6 +100,7 @@ delete=
 basedir=
 vsversion=
 vstype=
+platforms=x64
 while :
 do
     case "$1" in
@@ -130,6 +137,14 @@ do
         -T)
             if [ -n "$2" ]; then
                 vstype=$2
+                shift
+            else
+                echo "Error: Argument for $1 is missing" >&2
+                exit 1
+            fi;;
+        -p)
+            if [ -n "$2" ]; then
+                platforms=$2
                 shift
             else
                 echo "Error: Argument for $1 is missing" >&2
@@ -182,6 +197,16 @@ if [ $? -ne 0 ]; then
     echo "*** Error: Visual Studio type \"$vstype\" is not supported."
     usage
     exit 1
+fi
+
+check_value "$platforms" "$splatforms"
+if [ $? -ne 0 ]; then
+    echo "*** Error: platforms type \"$platforms\" is not supported."
+    usage
+    exit 1
+fi
+if [ $platforms == "Win32_x64" ]; then
+    platforms="Win32 x64"
 fi
 
 if [ "x$vstype" == "x" ]; then
