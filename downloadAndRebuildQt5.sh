@@ -331,14 +331,17 @@ create_config_file() {
     echo "-opensource" >>$3
 }
 
-curlpath=`which curl 2>/dev/null`
-if [ "x$curlpath" = "x" ]; then
-    echo "*** Error: curl not found."
-    echo "  curl can be downloaded from"
-    echo "  https://curl.haxx.se/download.html"
-    echo "  The executable has to be copied into the git installation"
-    echo "  mingw32/bin or mingw64/bin."
-fi
+check_curl_exists() {
+    curlpath=`which curl 2>/dev/null`
+    if [ "x$curlpath" = "x" ]; then
+        echo "*** Error: curl not found."
+        echo "  curl can be downloaded from"
+        echo "  https://curl.haxx.se/download.html"
+        echo "  The executable has to be copied into the git installation"
+        echo "  mingw32/bin or mingw64/bin."
+        exit 1
+    fi
+}
 
 urls=`echo "$qturl"`
 qtdir=Qt
@@ -382,6 +385,7 @@ for url in $urls
 do
     file=$(basename "$url")
     if [ ! -r $qtdir/$file ]; then
+        check_curl_exists
         echo downloading $file...
         curl -# -L $url > "$qtdir/$file"
     fi
