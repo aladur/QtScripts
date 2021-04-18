@@ -4,7 +4,7 @@ Collection of scripts to download and build Qt.
 
 ## downloadAndRebuildQt5.sh
 
-Shell script to be used to download and build Qt5 on Windows. It can e.g. with bash shell which comes with [Git for Windows](https://git-scm.com/download/win).
+Shell script to be used to download and build Qt5 on Windows. It is executable with bash shell which comes with [Git for Windows](https://git-scm.com/download/win).
 
 ### Syntax
 ```
