@@ -23,7 +23,9 @@
 # Download and rebuild Qt 5.x.y libraries.
 #
 # Syntax:
-#    downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>][-p <platforms>] -v <qt_version>
+#    downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>]
+#                             [-p <platforms>] -v <qt_version>
+#
 # Options:
 #   -d:             Delete Qt downloads and build directories before downloading
 #                   and building them.
@@ -65,7 +67,9 @@ vstypes="Enterprise Professional Community"
 
 usage() {
     echo "Syntax:"
-    echo "   downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>][-p <platforms>] -v <qt_version>"
+    echo "   downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>]"
+    echo "                            [-p <platforms>] -v <qt_version>"
+    echo ""
     echo "Options:"
     echo "   -d:             Delete Qt downloads and build directories before downloading"
     echo "                   and building them."
