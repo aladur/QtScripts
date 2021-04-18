@@ -8,7 +8,9 @@ Shell script to be used to download and build Qt5 on Windows. It can e.g. with b
 
 ### Syntax
 ```
-downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version>][-T <vs_type>][-p <platforms>] -v <qt_version>
+downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version>][-T <vs_type>]
+                         [-p <platforms>] -v <qt_version>
+
 Options:
    -d:             Delete Qt downloads and build directories before downloading
                    and building them.
