@@ -63,7 +63,7 @@ vstypes="Enterprise Professional Community"
 # DO NOT CHANGE ANYTHING BEYOND THIS LINE
 #========================================
 
-function usage() {
+usage() {
     echo "Syntax:"
     echo "   downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>][-p <platforms>] -v <qt_version>"
     echo "Options:"
