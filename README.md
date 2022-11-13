@@ -2,14 +2,14 @@
 
 Collection of scripts to download and build Qt.
 
-## downloadAndRebuildQt5.sh
+## downloadAndRebuildQt.sh
 
 Shell script to be used to download and build Qt5.x.y or Qt6.x.y on Windows. It is executable with bash shell which comes with [Git for Windows](https://git-scm.com/download/win).
 
 ### Syntax
 ```
-downloadAndRebuildQt5.sh [-d][-D <base_dir>][-V <vs_version>][-T <vs_type>]
-                         [-p <platforms>] -v <qt_version>
+downloadAndRebuildQt.sh [-d][-D <base_dir>][-V <vs_version>][-T <vs_type>]
+                        [-p <platforms>] -v <qt_version>
 
 Options:
    -d:             Delete Qt downloads and build directories before downloading
