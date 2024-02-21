@@ -24,7 +24,7 @@
 #
 # Syntax:
 #    downloadAndRebuildQt.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>]
-#                            [-p <platforms>] -v <qt_version>
+#                            [-p <platforms>][-s] -v <qt_version>
 #
 # Options:
 #   -d:             Delete Qt downloads and build directories before downloading
@@ -44,6 +44,7 @@
 #                   If not set x64 is build. Win32_x64 builds for both
 #                   Win32 and x64 platforms. Only supported for Qt5. Qt6 only
 #                   supports x64.
+#   -s              Suppress progress bar when downloading files.
 #   -v qt_version   Specify Qt version to be build. This parameter is required.
 #                   Syntax: <major>.<minor>.<patch>
 #                   Supported major version is 5 or 6. See
@@ -88,7 +89,7 @@ vstypes="Enterprise Professional Community"
 usage() {
     echo "Syntax:"
     echo "   downloadAndRebuildQt.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>]"
-    echo "                           [-p <platforms>] -v <qt_version>"
+    echo "                           [-p <platforms>][-s] -v <qt_version>"
     echo ""
     echo "Options:"
     echo "   -d:             Delete Qt downloads and build directories before downloading"
@@ -107,6 +108,7 @@ usage() {
     echo "   -p <platforms>  For Qt5 the platforms to be build, Win32, x64 or Win32_x64."
     echo "                   If not set x64 is build. Win32_x64 builds for both"
     echo "                   Win32 and x64 platforms. Qt6 only supports x64."
+    echo "   -s              Suppress progress bar when downloading files."
     echo "   -v <qt_version> The Qt version to be build. Syntax: <major>.<minor>.<patch>"
     echo "                   Supported major version is 5 or 6. See"
     echo "                   https://download.qt.io/archive/qt/ for available versions."
@@ -129,6 +131,7 @@ basedir=
 vsversion=
 vstype=
 platforms=x64
+curl_progress=""
 while :
 do
     case "$1" in
@@ -178,6 +181,8 @@ do
                 echo "Error: Argument for $1 is missing" >&2
                 exit 1
             fi;;
+        -s)
+            curl_progress="-sS";;
         *) break;;
     esac
     shift
@@ -377,25 +382,26 @@ as_doublebslash_windows_path() {
 # $6: Path of the generated batch script
 create_qt_build_script() {
     echo CALL \"$1\" $2 >$6
-    echo IF %ERRORLEVEL% neq 0 EXIT /b %ERRORLEVEL% >>$6
+    echo IF %ERRORLEVEL% neq 0 GOTO :end >>$6
     echo SET _ROOT=$3 >>$6
     echo SET PATH=\%_ROOT\%\\bin\;\%PATH\% >>$6
     echo SET _ROOT= >>$6
-    echo >>$6
     echo cd \"$4\" >>$6
     echo CALL \"$3\\configure.bat\" -redo >>$6
-    echo IF %ERRORLEVEL% neq 0 EXIT /b %ERRORLEVEL% >>$6
+    echo IF %ERRORLEVEL% neq 0 GOTO :end >>$6
 if [ "$5" = "5" ]; then
     echo jom.exe >>$6
-    echo IF %ERRORLEVEL% neq 0 EXIT /b %ERRORLEVEL% >>$6
+    echo IF %ERRORLEVEL% neq 0 GOTO :end >>$6
     echo jom.exe install >>$6
-    echo IF %ERRORLEVEL% neq 0 EXIT /b %ERRORLEVEL% >>$6
 else
     echo cmake --build . --parallel >>$6
-    echo IF %ERRORLEVEL% neq 0 EXIT /b %ERRORLEVEL% >>$6
+    echo IF %ERRORLEVEL% neq 0 GOTO :end >>$6
     echo ninja.exe install >>$6
-    echo IF %ERRORLEVEL% neq 0 EXIT /b %ERRORLEVEL% >>$6
 fi
+    echo :end >>$6
+    echo echo ERRORLEVEL=\%ERRORLEVEL\% >>$6
+    echo EXIT /b %ERRORLEVEL% >>$6
+    chmod +x $6
 }
 
 # Create the Qt build config file.
@@ -413,7 +419,7 @@ create_config_file() {
     echo "-feature-concurrent" >>$3
     echo "-feature-dbus" >>$3
     echo "-feature-xml" >>$3
-    echo "-no-feature-testlib" >>$3
+    echo "-feature-testlib" >>$3
     echo "-make" >>$3
     echo "examples" >>$3
     echo "-qt-zlib" >>$3
@@ -428,7 +434,9 @@ if [ "$2" = "5" ]; then
 else
     echo "c++17" >>$3
 fi
+if [ "$2" = "5" ]; then
     echo "-mp" >>$3
+fi
     echo "-confirm-license" >>$3
     echo "-opensource" >>$3
 }
@@ -512,7 +520,7 @@ do
     if [ ! -r $qtdir/$file ]; then
         check_curl_exists
         echo downloading $file...
-        curl -# -L $url > "$qtdir/$file"
+        curl $curl_progress -# -L $url > "$qtdir/$file"
     fi
 done
 if [ ! "$?" == "0" ]; then
@@ -584,11 +592,14 @@ do
     create_config_file $absqttgtdir\\$platform $qtmaversion $configoptpath
     absqtsrcdir=$( as_absolute_windows_path $qtsrcdir )
     absqtbuilddir=$( as_absolute_windows_path $qtdir/$directory )
-    batchscript=$qtdir/$directory/build_qt.bat
+    batchscript=$qtdir/$directory/build_qt.cmd
     create_qt_build_script "$msvcscript" $arch "$absqtsrcdir" "$absqtbuilddir" $qtmaversion $batchscript
+    echo ========== START Contents of build batch file ==========
+    cat $batchscript
+    echo ========== END Contents of build batch file ==========
 
     echo building $platform Qt $qtversion libraries...
-    cmd < $batchscript
+    ./$batchscript
     if [ ! "$?" == "0" ]; then
         echo "Error: Building Qt libraries. Aborted." >&2
         exit 1

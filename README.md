@@ -1,3 +1,7 @@
+| Qt5 build on VS2019 and VS2022 | Qt6 build on VS2019 and VS2022 |
+|--------------------------------|--------------------------------|
+| [![github actions](https://github.com/aladur/QtScripts/actions/workflows/build-qt5.yml/badge.svg?branch=main)](https://github.com/aladur/QtScripts/actions/workflows/build-qt5.yml) | [![github actions](https://github.com/aladur/QtScripts/actions/workflows/build-qt6.yml/badge.svg?branch=main)](https://github.com/aladur/QtScripts/actions/workflows/build-qt6.yml) |
+
 # QtScripts
 
 Collection of scripts to download and build Qt.
@@ -9,7 +13,7 @@ Shell script to be used to download and build Qt5.x.y or Qt6.x.y on Windows. It 
 ### Syntax
 ```
 downloadAndRebuildQt.sh [-d][-D <base_dir>][-V <vs_version>][-T <vs_type>]
-                        [-p <platforms>] -v <qt_version>
+                        [-p <platforms>][-s] -v <qt_version>
 
 Options:
    -d:             Delete Qt downloads and build directories before downloading
@@ -28,7 +32,8 @@ Options:
    -p <platforms>  For Qt5 the platforms to be build, Win32, x64 or Win32_x64.
                    If not set x64 is build. Win32_x64 builds for both
                    Win32 and x64 platforms. Qt6 only supports x64.
+   -s              Suppress progress bar when downloading files.
    -v <qt_version> The Qt version to be build. Syntax: <major>.<minor>.<patch>
-                   Supported major version is 5 or 6. See
-                   https://download.qt.io/archive/qt/ for available versions.
-
+                   Supported major version is 5 or 6.
+```
+Look at [https://download.qt.io/archive/qt/](https://download.qt.io/archive/qt/) for available versions.

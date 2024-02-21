@@ -1,0 +1,77 @@
+# Test build script with Qt5 on Visual Studio 2019 and 2022.
+
+name: build-qt5
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ 2019, 2022 ]
+        qt-version: [ 5.15.12 ]
+      fail-fast: false
+    runs-on: windows-${{ matrix.os }}
+    env:
+      QT_VERSION: ${{ matrix.qt-version }}
+      BUILD_DIR: VS${{ matrix.os }}
+    steps:
+
+      - name: License
+        shell: bash
+        run: |
+          echo This build script automatically agrees with Qt open source license.
+          echo For details see: https://www.qt.io/download-open-source
+          echo If you do not agree with this you are not allowed to use this script.
+
+      - name: Context
+        shell: bash
+        run: |
+          pwd
+          echo os=windows-${{ matrix.os }} qt-version=Qt$QT_VERSION
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Qt5
+        shell: bash
+        if: ${{ startsWith( matrix.qt-version, '5' ) }}
+        run: |
+          mkdir $BUILD_DIR
+          mkdir bin; cd bin
+          curl -sS -L http://download.qt.io/official_releases/jom/jom.zip >jom.zip
+          unzip jom.zip
+          PATH=`pwd`:$PATH
+          cd ..
+          ./downloadAndRebuildQt.sh -s -D $BUILD_DIR -V ${{ matrix.os }} -v $QT_VERSION -p Win32_x64
+
+      - name: Create Build artifacts
+        shell: bash
+        run: |
+          sdir=$BUILD_DIR/Qt/build$QT_VERSION
+          tdir=result/$BUILD_DIR/Qt$QT_VERSION
+          mkdir -p $tdir
+          ls -lR $BUILD_DIR/Qt/Qt$QT_VERSION > $tdir/built-qt-files.txt
+          for sfile in build_qt.cmd config.opt config.log config.summary;
+          do
+              tfile=$sfile
+              if [ $sfile == "config.summary" ]; then
+                  tfile=${sfile}.txt
+              fi
+              for platform in Win32 x64;
+              do
+                  if [ ! -d $tdir/$platform ]; then mkdir $tdir/$platform; fi
+                  if [ -f $sdir/$platform/$sfile ]; then
+                      cp $sdir/$platform/$sfile $tdir/$platform/$tfile
+                  fi
+              done
+          done
+
+      - name: Upload Build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ env.BUILD_DIR }}-Qt${{ env.QT_VERSION }}-result
+          path: result
