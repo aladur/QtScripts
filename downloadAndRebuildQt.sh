@@ -24,7 +24,7 @@
 #
 # Syntax:
 #    downloadAndRebuildQt.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>]
-#                            [-p <platforms>][-s] -v <qt_version>
+#                            [-p <platforms>][-s][-m <mirror>]-v <qt_version>
 #
 # Options:
 #   -d:             Delete Qt downloads and build directories before downloading
@@ -49,6 +49,9 @@
 #                   Syntax: <major>.<minor>.<patch>
 #                   Supported major version is 5 or 6. See
 #                   https://download.qt.io/archive/qt/ for available versions.
+#  -m <mirror>      Use mirror site base url for download. It should contain
+#                   an 'archive' folder. Default is the Qt download site:
+#                   https://download.qt.io.
 #
 # Qt5
 #=====
@@ -89,7 +92,7 @@ vstypes="Enterprise Professional Community"
 usage() {
     echo "Syntax:"
     echo "   downloadAndRebuildQt.sh [-d][-D <base_dir>][-V <vs_version][-T <vs_type>]"
-    echo "                           [-p <platforms>][-s] -v <qt_version>"
+    echo "                           [-p <platforms>][-s][-m <mirror>]-v <qt_version>"
     echo ""
     echo "Options:"
     echo "   -d:             Delete Qt downloads and build directories before downloading"
@@ -112,6 +115,9 @@ usage() {
     echo "   -v <qt_version> The Qt version to be build. Syntax: <major>.<minor>.<patch>"
     echo "                   Supported major version is 5 or 6. See"
     echo "                   https://download.qt.io/archive/qt/ for available versions."
+    echo "   -m <mirror>     Use mirror site base url for download. It should contain"
+    echo "                   an 'archive' folder. Default is the Qt download site:"
+    echo "                   https://download.qt.io"
     echo ""
     echo "Depending on the -p option Win32 and/or x64 is build. Always Debug"
     echo "and Release versions are build."
@@ -132,6 +138,8 @@ vsversion=
 vstype=
 platforms=x64
 curl_progress=""
+baseurl="https://download.qt.io"
+
 while :
 do
     case "$1" in
@@ -183,6 +191,14 @@ do
             fi;;
         -s)
             curl_progress="-sS";;
+        -m)
+            if [ -n "$2" ]; then
+                baseurl=$2
+                shift
+            else
+                echo "Error: Argument for $1 is missing" >&2
+                exit 1
+            fi;;
         *) break;;
     esac
     shift
@@ -223,6 +239,7 @@ if [ "x$match" == "x" ]; then
     exit 1
 fi
 
+baseurl=`echo $baseurl | sed "s|/$||"`
 qtversion=$match
 qtmamiversion=`echo $qtversion | sed -e "s/\([56]\.[0-9]\+\).*/\1/"`
 qtmaversion=`echo $qtversion | sed -e "s/\([56]\).*/\1/"`
@@ -329,7 +346,9 @@ qtos=""
 if [ "$qtmamiversion" == "5.15" ] && [ $qtpatch -ge 3 ]; then
     qtos="-opensource"
 fi
-qturl=`echo "https://download.qt.io/archive/qt/${qtmamiversion}/${qtversion}/submodules/qtbase-everywhere${qtos}-src-${qtversion}.zip"`
+qtfile=`echo "qtbase-everywhere${qtos}-src-${qtversion}.zip"`
+qturl=`echo "https://download.qt.io/archive/qt/${qtmamiversion}/${qtversion}/submodules/${qtfile}"`
+md5sums=`echo "${baseurl}/archive/qt/${qtmamiversion}/${qtversion}/submodules/md5sums.txt"`
 
 MSBUILDDISABLENODEREUSE=1
 export MSBUILDDISABLENODEREUSE
@@ -514,20 +533,41 @@ if [ "$delete" = "yes" ]; then
  fi
 
 # Download files (Only if package not already downloaded or deleted before)
+# Execute a checksum validation.
 for url in $urls
 do
     file=$(basename "$url")
     if [ ! -r $qtdir/$file ]; then
         check_curl_exists
+        echo download site: $baseurl
         echo downloading $file...
         curl $curl_progress -# -L $url > "$qtdir/$file"
+        if [ ! "$?" == "0" ]; then
+            echo "**** Error: Download of $file failed. Aborted." >&2
+            rm -f $qtdir/$file
+            exit 1
+        fi
+        file=$(basename "$md5sums")
+        echo downloading $file...
+        curl $curl_progress -# -L $md5sums > $file
+        if [ ! "$?" == "0" ]; then
+            echo "**** Error: Download of $file failed. Aborted." >&2
+            rm -f $file
+            exit 1
+        fi
+        md5sum=`cat $file | sed -n "s/\([0-9a-z]\+\) \+${qtfile}$/\1/p"`
+        expected=`md5sum ${qtdir}/${qtfile} | sed "s/ .*//"`
+        if [ "$md5sum" != "$expected" ]; then
+            echo "Checksum error:"
+            echo "  md5sum=  $md5sum"
+            echo "  expected=$expected"
+            exit 1
+        else
+            echo "Checksum verification passed."
+        fi
+        rm $file
     fi
 done
-if [ ! "$?" == "0" ]; then
-    echo "Error: Download failed. Aborted." >&2
-    rm -f $qtdir/$file
-    exit 1
-fi
 
 # Unpacking files
 # Supported extensions: tar.gz or zip
