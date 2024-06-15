@@ -35,5 +35,9 @@ Options:
    -s              Suppress progress bar when downloading files.
    -v <qt_version> The Qt version to be build. Syntax: <major>.<minor>.<patch>
                    Supported major version is 5 or 6.
+   -m <mirror>     Use mirror site base url for download. It should contain
+                   an 'archive' folder. Default is the Qt download site:
+                   https://download.qt.io.
 ```
 Look at [https://download.qt.io/archive/qt/](https://download.qt.io/archive/qt/) for available versions.
+Look at [https://download.qt.io/static/mirrorlist/](https://download.qt.io/static/mirrorlist/) for available download mirrors.
