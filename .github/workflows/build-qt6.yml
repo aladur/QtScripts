@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ 2019, 2022 ]
-        qt-version: [ 6.7.3 ]
+        qt-version: [ 6.8.0 ]
       fail-fast: false
     runs-on: windows-${{ matrix.os }}
     env:
@@ -42,7 +42,7 @@ jobs:
         run: |
           mkdir $BUILD_DIR
           mkdir bin; cd bin
-          curl -sS -L https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-win.zip >ninja.zip
+          curl -sS -L https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip >ninja.zip
           unzip ninja.zip
           PATH=`pwd`:$PATH
           cd ..
