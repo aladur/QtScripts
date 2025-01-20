@@ -341,15 +341,6 @@ if [ ! -f "$msvcscript" ]; then
     exit 1
 fi
 
-# Create the url from which to download a specific version (Supported: Qt5.minor.patch)
-qtos=""
-if [ "$qtmamiversion" == "5.15" ] && [ $qtpatch -ge 3 ]; then
-    qtos="-opensource"
-fi
-qtfile=`echo "qtbase-everywhere${qtos}-src-${qtversion}.zip"`
-qturl=`echo "https://download.qt.io/archive/qt/${qtmamiversion}/${qtversion}/submodules/${qtfile}"`
-md5sums=`echo "${baseurl}/archive/qt/${qtmamiversion}/${qtversion}/submodules/md5sums.txt"`
-
 MSBUILDDISABLENODEREUSE=1
 export MSBUILDDISABLENODEREUSE
 
@@ -494,6 +485,38 @@ check_ninja_exists() {
     fi
 }
 
+# Create the url from which to download a specific version (Supported: Qt5.minor.patch)
+qtos=""
+if [ "$qtmamiversion" == "5.15" ] && [ $qtpatch -ge 3 ]; then
+    qtos="-opensource"
+fi
+if [ "$qtmamiversion" == "6.2" ] && [ $qtpatch -ge 5 ]; then
+    qtos="-opensource"
+fi
+if [ "$qtmamiversion" == "6.5" ] && [ $qtpatch -ge 4 ]; then
+    qtos="-opensource"
+fi
+if [ "$qtmamiversion" == "6.8" ] && [ $qtpatch -ge 2 ]; then
+    qtos="-opensource"
+fi
+md5sumfile='md5sums.txt'
+
+# The Qt download files since January 2025 are located in a "src"
+# subdirectory after the version (at least for the 6.2.x and 6.5.x
+# versions). This is checked by trial and error by downloading the
+# (small) md5sums.txt file.
+for subdir in "" "/src"
+do
+    qtfile=`echo "qtbase-everywhere${qtos}-src-${qtversion}.zip"`
+    qturl=`echo "https://download.qt.io/archive/qt/${qtmamiversion}/${qtversion}${subdir}/submodules/${qtfile}"`
+    md5sums=`echo "${baseurl}/archive/qt/${qtmamiversion}/${qtversion}${subdir}/submodules/${md5sumfile}"`
+    curl -s -f -L -O $md5sums
+    if [ "$?" == "0" ]; then
+	break
+    fi
+done
+rm -f $md5sumfile
+
 urls=`echo "$qturl"`
 qtdir=Qt
 if [ ! "x$basedir" == "x" ]; then
@@ -541,21 +564,21 @@ do
         check_curl_exists
         echo download site: $baseurl
         echo downloading $file...
-        curl $curl_progress -# -L $url > "$qtdir/$file"
+        curl $curl_progress -# -f -L $url > "$qtdir/$file"
         if [ ! "$?" == "0" ]; then
             echo "**** Error: Download of $file failed. Aborted." >&2
+            echo "**** URL: $url" >&2
             rm -f $qtdir/$file
             exit 1
         fi
-        file=$(basename "$md5sums")
-        echo downloading $file...
-        curl $curl_progress -# -L $md5sums > $file
+        echo downloading $md5sumfile...
+        curl $curl_progress -# -f -L -O --remove-on-error $md5sums
         if [ ! "$?" == "0" ]; then
-            echo "**** Error: Download of $file failed. Aborted." >&2
-            rm -f $file
+            echo "**** Error: Download of $md5sumfile failed. Aborted." >&2
+            echo "**** URL: $md5sums" >&2
             exit 1
         fi
-        md5sum=`cat $file | sed -n "s/\([0-9a-z]\+\) \+${qtfile}$/\1/p"`
+        md5sum=`cat $md5sumfile | sed -n "s/\([0-9a-z]\+\) \+${qtfile}$/\1/p"`
         expected=`md5sum ${qtdir}/${qtfile} | sed "s/ .*//"`
         if [ "$md5sum" != "$expected" ]; then
             echo "Checksum error:"
@@ -565,7 +588,7 @@ do
         else
             echo "Checksum verification passed."
         fi
-        rm $file
+        rm $md5sumfile
     fi
 done
 
