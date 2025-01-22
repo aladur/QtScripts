@@ -485,7 +485,8 @@ check_ninja_exists() {
     fi
 }
 
-# Create the url from which to download a specific version (Supported: Qt5.minor.patch)
+# Create the url from which to download a specific version
+# (Supported: Qt(5|6).minor.patch)
 qtos=""
 if [ "$qtmamiversion" == "5.15" ] && [ $qtpatch -ge 3 ]; then
     qtos="-opensource"
@@ -496,15 +497,17 @@ fi
 if [ "$qtmamiversion" == "6.5" ] && [ $qtpatch -ge 4 ]; then
     qtos="-opensource"
 fi
-if [ "$qtmamiversion" == "6.8" ] && [ $qtpatch -ge 2 ]; then
-    qtos="-opensource"
-fi
 md5sumfile='md5sums.txt'
 
-# The Qt download files since January 2025 are located in a "src"
-# subdirectory after the version (at least for the 6.2.x and 6.5.x
-# versions). This is checked by trial and error by downloading the
-# (small) md5sums.txt file.
+# The md5sum file may have a different name.
+check_value "$qtversion" "6.2.5"
+if [ $? -eq 0 ]; then
+    md5sumfile='md5sum.txt'
+fi
+
+# Since January 2025 the files are located in a "src" subdirectory.
+# This is checked by trial and error by downloading the (small) md5sums file.
+# The result URL is stored in $qturl.
 for subdir in "" "/src"
 do
     qtfile=`echo "qtbase-everywhere${qtos}-src-${qtversion}.zip"`
@@ -513,6 +516,14 @@ do
     curl -s -f -L -O $md5sums
     if [ "$?" == "0" ]; then
 	break
+    else
+        if [ "x$subdir" == "x/src" ]; then
+	    echo "**** Error: md5sum file not found with these URLs:"
+            echo "     URL: $md5sumsold"
+            echo "     URL: $md5sums"
+            echo "     Aborted"
+        fi
+        md5sumsold=$md5sums
     fi
 done
 rm -f $md5sumfile
