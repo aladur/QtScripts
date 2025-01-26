@@ -487,46 +487,47 @@ check_ninja_exists() {
 
 # Create the url from which to download a specific version
 # (Supported: Qt(5|6).minor.patch)
-qtos=""
-if [ "$qtmamiversion" == "5.15" ] && [ $qtpatch -ge 3 ]; then
-    qtos="-opensource"
-fi
-if [ "$qtmamiversion" == "6.2" ] && [ $qtpatch -ge 5 ]; then
-    qtos="-opensource"
-fi
-if [ "$qtmamiversion" == "6.5" ] && [ $qtpatch -ge 4 ]; then
-    qtos="-opensource"
-fi
-md5sumfile='md5sums.txt'
 
-# The md5sum file may have a different name.
-check_value "$qtversion" "6.2.5"
+qtos=""
+# In qtosversions define an array with major.minor versions.
+# In qtospatchver define an array with the minimum patch version,
+# for which to use the "-opensource" substring.
+qtosversions=("5.15" "6.2" "6.5")
+qtospatchver=( 3      5     4   )
+for (( i=0; i<${#qtosversions[@]}; i++ ))
+do
+    if [ "${qtosversions[$i]}" == "$qtmamiversion" ] && [ $qtpatch -ge ${qtospatchver[$i]} ]; then
+        qtos="-opensource"
+        break
+    fi
+done
+
+# There is a default name containing all md5sums of a directory.
+# For some versions it has a different name.
+md5sumfile='md5sums.txt'
+check_value "$qtversion" "6.2.5 5.15.3"
 if [ $? -eq 0 ]; then
     md5sumfile='md5sum.txt'
 fi
 
 # Since January 2025 the files are located in a "src" subdirectory.
-# This is checked by trial and error by downloading the (small) md5sums file.
-# The result URL is stored in $qturl.
-for subdir in "" "/src"
+# In qtsubdirversions define an array with major.minor versions.
+# In qtsubdirpatchver define an array with the minimum patch version,
+# for which to use the subdirectory "src".
+subdir=""
+qtsubdirversions=("6.2" "6.5")
+qtsubdirpatchver=( 11    4   )
+for (( i=0; i<${#qtsubdir[@]}; i++ ))
 do
-    qtfile=`echo "qtbase-everywhere${qtos}-src-${qtversion}.zip"`
-    qturl=`echo "https://download.qt.io/archive/qt/${qtmamiversion}/${qtversion}${subdir}/submodules/${qtfile}"`
-    md5sums=`echo "${baseurl}/archive/qt/${qtmamiversion}/${qtversion}${subdir}/submodules/${md5sumfile}"`
-    curl -s -f -L -O $md5sums
-    if [ "$?" == "0" ]; then
-	break
-    else
-        if [ "x$subdir" == "x/src" ]; then
-	    echo "**** Error: md5sum file not found with these URLs:"
-            echo "     URL: $md5sumsold"
-            echo "     URL: $md5sums"
-            echo "     Aborted"
-        fi
-        md5sumsold=$md5sums
+    if [ "${qtsubdirversions[$i]}" == "$qtmamiversion" ] && [ $qtpatch -ge ${qtsubdirpatchver[$i]} ]; then
+        subdir="/src"
+        break
     fi
 done
-rm -f $md5sumfile
+
+qtfile=`echo "qtbase-everywhere${qtos}-src-${qtversion}.zip"`
+qturl=`echo "https://download.qt.io/archive/qt/${qtmamiversion}/${qtversion}${subdir}/submodules/${qtfile}"`
+md5sums=`echo "${baseurl}/archive/qt/${qtmamiversion}/${qtversion}${subdir}/submodules/${md5sumfile}"`
 
 urls=`echo "$qturl"`
 qtdir=Qt
