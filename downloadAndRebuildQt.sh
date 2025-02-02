@@ -243,6 +243,7 @@ baseurl=`echo $baseurl | sed "s|/$||"`
 qtversion=$match
 qtmamiversion=`echo $qtversion | sed -e "s/\([56]\.[0-9]\+\).*/\1/"`
 qtmaversion=`echo $qtversion | sed -e "s/\([56]\).*/\1/"`
+qtmiversion=`echo $qtversion | sed -e "s/^[56]\.\([0-9]\+\)\.[0-9]\+$/\1/"`
 qtpatch=`echo $qtversion | sed -e "s/^[56]\.[0-9]\+\.\([0-9]\+\)$/\1/"`
 
 if [ "$qtmaversion" = "5" ]; then
@@ -633,6 +634,24 @@ do
         fi
     fi
 done
+
+# Since Qt 6.8.0 only MSVC 2022 is supported.
+# A cmake flag -DQT_NO_MSVC_MIN_VERSION_CHECK:BOOL=ON
+# can be set to avoid the compiler version check to still
+# build with MSVC 2019. So these are inofficial versions.
+# See also:
+# https://doc.qt.io/qt-6.8/windows.html
+# https://doc.qt.io/qt-6.7/windows.html
+# https://www.qt.io/blog/moving-to-msvc-2022-in-qt-68
+# Enable cmake flag by patching a cmake file.
+if [ "$qtmaversion" == "6" ] && [ ${qtmiversion} -ge 8 ] && [ "$vsversion" == "2019" ]; then
+    filetopatch=${qtsrcdir}/cmake/QtProcessConfigureArgs.cmake
+    count=`sed -n "/push.*QT_NO_MSVC_MIN_VERSION_CHECK/p" $filetopatch | wc -l`
+    if [ $count -eq 0 ]; then
+        sed -i '/DQT_INTERNAL_CALLED_FROM_CONFIGURE:BOOL=TRUE/a push("-DQT_NO_MSVC_MIN_VERSION_CHECK=ON")' $filetopatch
+    fi
+    echo "==== REMARK: Building Qt ${qtversion} with Visual Studio ${vsversion} is an inofficial version."
+fi
 
 if [ ! -d $qtdir/$builddir ]; then
     mkdir $qtdir/$builddir;
