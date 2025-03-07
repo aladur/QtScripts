@@ -518,7 +518,7 @@ fi
 subdir=""
 qtsubdirversions=("6.2" "6.5")
 qtsubdirpatchver=( 11    4   )
-for (( i=0; i<${#qtsubdir[@]}; i++ ))
+for (( i=0; i<${#qtsubdirversions[@]}; i++ ))
 do
     if [ "${qtsubdirversions[$i]}" == "$qtmamiversion" ] && [ $qtpatch -ge ${qtsubdirpatchver[$i]} ]; then
         subdir="/src"
