@@ -54,7 +54,9 @@ jobs:
           sdir=$BUILD_DIR/Qt/build$QT_VERSION
           tdir=result/$BUILD_DIR/Qt$QT_VERSION
           mkdir -p $tdir
-          ls -lR $BUILD_DIR/Qt/Qt$QT_VERSION > $tdir/built-qt-files.txt
+          if [ -d $BUILD_DIR/Qt/Qt$QT_VERSION ]; then
+              ls -lR $BUILD_DIR/Qt/Qt$QT_VERSION > $tdir/built-qt-files.txt
+          fi
           for sfile in build_qt.cmd config.opt config.log config.summary;
           do
               tfile=$sfile

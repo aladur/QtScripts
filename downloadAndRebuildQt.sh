@@ -635,6 +635,14 @@ do
     fi
 done
 
+# Since Qt 6.9.0 building Qt on VS2019 aborts with an error.
+# See also:
+# https://doc.qt.io/qt-6.9/windows.html
+if [ "$qtmaversion" == "6" ] && [ ${qtmiversion} -ge 9 ] && [ "$vsversion" == "2019" ]; then
+    echo "**** Error: Qt >= 6.9.0 can not be build with Visual Studio 2019." >&2
+    exit 2
+fi
+
 # Since Qt 6.8.0 only MSVC 2022 is supported.
 # A cmake flag -DQT_NO_MSVC_MIN_VERSION_CHECK:BOOL=ON
 # can be set to avoid the compiler version check to still

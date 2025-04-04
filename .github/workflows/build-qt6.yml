@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ 2019, 2022 ]
-        qt-version: [ 6.8.3 ]
+        qt-version: [ 6.9.0 ]
       fail-fast: false
     runs-on: windows-${{ matrix.os }}
     env:
@@ -46,7 +46,12 @@ jobs:
           unzip ninja.zip
           PATH=`pwd`:$PATH
           cd ..
-          ./downloadAndRebuildQt.sh -s -D $BUILD_DIR -V ${{ matrix.os }} -v $QT_VERSION -p x64
+          ./downloadAndRebuildQt.sh -s -D $BUILD_DIR -V ${{ matrix.os }} -v $QT_VERSION -p x64 || true
+          # exit code 2 means to try to build Qt >= 6.9.0 on VS2019 which does
+          exit_code=$?
+          if [[ $exit_code -ne 0 ]] && [[ $exit_code -ne 2 ]]; then
+              exit $exit_code
+          fi
 
       - name: Create Build artifacts
         shell: bash
@@ -54,7 +59,9 @@ jobs:
           sdir=$BUILD_DIR/Qt/build$QT_VERSION
           tdir=result/$BUILD_DIR/Qt$QT_VERSION
           mkdir -p $tdir
-          ls -lR $BUILD_DIR/Qt/Qt$QT_VERSION > $tdir/built-qt-files.txt
+          if [ -d $BUILD_DIR/Qt/Qt$QT_VERSION ]; then
+              ls -lR $BUILD_DIR/Qt/Qt$QT_VERSION > $tdir/built-qt-files.txt
+          fi
           for sfile in build_qt.cmd config.opt config.log config.summary;
           do
               tfile=$sfile
