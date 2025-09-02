@@ -1,4 +1,4 @@
-| Qt5 build on VS2019 and VS2022 | Qt6 build on VS2019 and VS2022 |
+| Qt5 build on VS2022 | Qt6 build on VS2022 |
 |--------------------------------|--------------------------------|
 | [![github actions](https://github.com/aladur/QtScripts/actions/workflows/build-qt5.yml/badge.svg?branch=main)](https://github.com/aladur/QtScripts/actions/workflows/build-qt5.yml) | [![github actions](https://github.com/aladur/QtScripts/actions/workflows/build-qt6.yml/badge.svg?branch=main)](https://github.com/aladur/QtScripts/actions/workflows/build-qt6.yml) |
 

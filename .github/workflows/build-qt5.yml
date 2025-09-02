@@ -1,4 +1,5 @@
-# Test build script with Qt5 on Visual Studio 2019 and 2022.
+# Test build script with Qt5 on Windows Server 2022.
+# Qt5 does not build on Windows Server 2025
 
 name: build-qt5
 on:
@@ -11,7 +12,7 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ 2019, 2022 ]
+        os: [ 2022 ]
         qt-version: [ 5.15.17 ]
       fail-fast: false
     runs-on: windows-${{ matrix.os }}

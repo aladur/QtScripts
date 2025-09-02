@@ -1,4 +1,4 @@
-# Test build script with Qt6 on Visual Studio 2019 and 2022.
+# Test build script with Qt6 on Windows Server 2022 and 2025.
 
 name: build-qt6
 on:
@@ -11,8 +11,8 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ 2019, 2022 ]
-        qt-version: [ 6.5.6 ]
+        os: [ 2022 ]
+        qt-version: [ 6.9.2 ]
       fail-fast: false
     runs-on: windows-${{ matrix.os }}
     env:
@@ -46,8 +46,9 @@ jobs:
           unzip ninja.zip
           PATH=`pwd`:$PATH
           cd ..
-          ./downloadAndRebuildQt.sh -s -D $BUILD_DIR -V ${{ matrix.os }} -v $QT_VERSION -p x64 || true
-          # exit code 2 means to try to build Qt >= 6.9.0 on VS2019 which does
+          ./downloadAndRebuildQt.sh -s -D $BUILD_DIR -V ${{ matrix.os }} -v $QT_VERSION -p x64
+          # exit code 2 means to try to build Qt >= 6.9.0 on VS2019 which is
+          # not supported. Suppress error exit in this case.
           exit_code=$?
           if [[ $exit_code -ne 0 ]] && [[ $exit_code -ne 2 ]]; then
               exit $exit_code
