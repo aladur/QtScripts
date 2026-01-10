@@ -41,9 +41,10 @@ jobs:
         shell: bash
         if: ${{ startsWith( matrix.qt-version, '5' ) }}
         run: |
+          JOMZIP=jom_1_1_4.zip
           mkdir $BUILD_DIR
           mkdir bin; cd bin
-          curl -sS -L http://download.qt.io/official_releases/jom/jom.zip >jom.zip
+          curl -sS -L http://download.qt.io/official_releases/jom/$JOMZIP >jom.zip
           unzip jom.zip
           PATH=`pwd`:$PATH
           cd ..
