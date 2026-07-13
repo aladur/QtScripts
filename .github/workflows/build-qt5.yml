@@ -35,7 +35,7 @@ jobs:
           echo os=windows-${{ matrix.os }} qt-version=Qt$QT_VERSION
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Qt5
         shell: bash
